@@ -294,25 +294,24 @@ class FraudDetectionSystem:
         """Detect potential money laundering patterns"""
         with self.driver.session() as session:
             result = session.run("""
-                MATCH path = (start:Account)-[:SENDS]->(t1:Transaction)-[:RECEIVES]->(middle:Account)-[:SENDS]->(t2:Transaction)-[:RECEIVES]->(end:Account)
+                MATCH (start:Account)-[:SENDS]->(t1:Transaction)-[:RECEIVES]->(middle:Account)-[:SENDS]->(t2:Transaction)-[:RECEIVES]->(end:Account)
                 WHERE start.id <> middle.id AND middle.id <> end.id AND start.id <> end.id
                 AND t1.timestamp > datetime() - duration({hours: 24})
                 AND t2.timestamp > t1.timestamp
                 AND t2.timestamp < t1.timestamp + duration({minutes: 30})
-                WITH start, middle, end, t1.amount as amount1, t2.amount as amount2,
-                     (amount1 + amount2) as total_amount
-                WHERE total_amount > 50000
+                AND (t1.amount + t2.amount) > 50000
                 MATCH (u1:User)-[:OWNS]->(start)
                 MATCH (u2:User)-[:OWNS]->(end)
                 RETURN u1.name as origin_user, u2.name as destination_user,
                        start.bank as origin_bank, end.bank as destination_bank,
-                       amount1, amount2, total_amount,
+                       t1.amount as amount1, t2.amount as amount2,
+                       (t1.amount + t2.amount) as total_amount,
                        CASE 
-                           WHEN total_amount > 100000 THEN 'CRITICAL'
-                           WHEN total_amount > 75000 THEN 'HIGH'
+                           WHEN (t1.amount + t2.amount) > 100000 THEN 'CRITICAL'
+                           WHEN (t1.amount + t2.amount) > 75000 THEN 'HIGH'
                            ELSE 'MEDIUM'
                        END as risk_level
-                ORDER BY total_amount DESC
+                ORDER BY (t1.amount + t2.amount) DESC
             """)
             
             return [dict(record) for record in result]
