@@ -265,9 +265,9 @@ class SocialNetworkAnalyzer:
 
 def main():
     # Connect to Neo4j (update these credentials as needed)
-    uri = "bolt://localhost:7687"
+    uri = "neo4j+s://3bf0ff2c.databases.neo4j.io"
     user = "neo4j"
-    password = "password"  # Change this to your actual password
+    password = "QrIQolzO5EvFK-ObdlsKTroOPeVQkfUJOM3-4ts6JZI"  # Change this to your actual password
     
     analyzer = SocialNetworkAnalyzer(uri, user, password)
     
